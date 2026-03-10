@@ -3,6 +3,7 @@
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Auth\RegisterController;
 use App\Http\Controllers\Auth\LoginController; // Import the Login Controller
+use App\Http\Controllers\DashboardController;
 
 Route::get('/', function () {
     return view('welcome');
@@ -18,3 +19,8 @@ Route::post('/login', [LoginController::class, 'login'])->name('login.post');
 
 // Logout Route
 Route::post('/logout', [LoginController::class, 'logout'])->name('logout');
+
+// Group routes that require the student to be logged in
+Route::middleware(['auth'])->group(function () {
+    Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
+});

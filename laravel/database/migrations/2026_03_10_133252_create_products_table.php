@@ -15,15 +15,12 @@ return new class extends Migration
             $table->id();
             $table->string('title');
             $table->text('description');
-            $table->decimal('price', 8, 2); // Handles up to 999,999.99
-            $table->string('image_path'); // Path to the product photo
-            $table->string('category'); // e.g., Electronics, Books, Furniture
-            $table->enum('status', ['available', 'pending', 'sold'])->default('available');
-            
-            // Relationships
-            $table->foreignId('user_id')->constrained()->onDelete('cascade'); // The Seller
-            $table->foreignId('university_id')->constrained()->onDelete('cascade'); // The Campus
-            
+            $table->decimal('price', 10, 2);
+            $table->string('image_path');
+            $table->string('category');
+            $table->string('status')->default('active'); // active, sold, etc.
+            $table->foreignId('user_id')->constrained()->onDelete('cascade');
+            $table->foreignId('university_id')->constrained()->onDelete('cascade');
             $table->timestamps();
         });
     }
