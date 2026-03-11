@@ -8,15 +8,14 @@ use Illuminate\Support\Facades\Auth;
 
 class ProductController extends Controller
 {
-    // Show the form to create a new product
     public function create()
     {
         return view('products.create');
     }
 
-    // Store the product in the database
     public function store(Request $request)
     {
+        // ... (your existing store logic)
         $request->validate([
             'title' => 'required|string|max:255',
             'description' => 'required|string',
@@ -25,10 +24,8 @@ class ProductController extends Controller
             'image' => 'required|image|mimes:jpeg,png,jpg|max:2048',
         ]);
 
-        // Handle Image Upload
         $path = $request->file('image')->store('products', 'public');
 
-        // Create the product linked to the user's university
         Product::create([
             'title' => $request->title,
             'description' => $request->description,
@@ -41,5 +38,16 @@ class ProductController extends Controller
         ]);
 
         return redirect()->route('dashboard')->with('success', 'Item posted successfully!');
+    }
+
+    /**
+     * ADD THE SHOW METHOD HERE
+     */
+    public function show(Product $product)
+    {
+        // This ensures we can access the seller's name via $product->user->name
+        $product->load('user');
+        
+        return view('products.show', compact('product'));
     }
 }
