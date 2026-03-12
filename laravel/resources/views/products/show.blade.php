@@ -9,7 +9,7 @@
 
     <nav class="bg-blue-600 p-4 text-white shadow-md">
         <div class="container mx-auto">
-            <a href="{{ route('dashboard') }}" class="font-bold">← Back to Marketplace</a>
+            <a href="{{ route('dashboard') }}" class="font-bold hover:text-blue-100 transition">← Back to Marketplace</a>
         </div>
     </nav>
 
@@ -37,14 +37,20 @@
                     </p>
                 </div>
 
-                <div class="mt-8 bg-gray-50 p-4 rounded-lg flex items-center justify-between">
-                    <div>
-                        <p class="text-sm text-gray-500">Listed by</p>
-                        <p class="font-bold text-gray-800">{{ $product->user->name }}</p>
+                <div class="mt-8 bg-gray-50 p-6 rounded-xl border border-gray-100">
+                    <div class="flex items-center justify-between mb-4">
+                        <div>
+                            <p class="text-xs text-gray-500 uppercase font-semibold">Listed by</p>
+                            <p class="font-bold text-gray-800 text-lg">{{ $product->user->name }}</p>
+                        </div>
+                        <div class="h-10 w-10 bg-blue-100 rounded-full flex items-center justify-center text-blue-600 font-bold">
+                            {{ substr($product->user->name, 0, 1) }}
+                        </div>
                     </div>
-                    <a href="mailto:{{ $product->user->email }}" 
-                       class="bg-blue-600 text-white px-6 py-2 rounded-lg font-bold hover:bg-blue-700 transition">
-                        Contact Seller
+
+                    <a href="mailto:{{ $product->user->email }}?subject=Interested in your item: {{ $product->title }} on Campus-Mart" 
+                       class="w-full bg-blue-600 text-white px-6 py-3 rounded-lg font-bold hover:bg-blue-700 transition block text-center shadow-md">
+                        Contact Seller via Email
                     </a>
                 </div>
                 

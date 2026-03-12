@@ -29,6 +29,7 @@
 
         <form action="{{ route('login.post') }}" method="POST">
             @csrf
+            
 
             <div class="mb-4">
                 <label class="block text-gray-700 font-semibold mb-2">University Email</label>

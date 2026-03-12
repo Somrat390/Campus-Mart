@@ -8,14 +8,20 @@ use Illuminate\Support\Facades\Auth;
 
 class DashboardController extends Controller
 {
-    public function index()
-    {
-        // Get the university ID of the logged-in student
+    public function index(Request $request){
+        
         $universityId = Auth::user()->university_id;
+        $search = $request->input('search');
 
-        // Fetch only products from the same university that are 'active'
         $products = Product::where('university_id', $universityId)
             ->where('status', 'active')
+            ->when($search, function ($query, $search) {
+                return $query->where(function($q) use ($search) {
+                    $q->where('title', 'like', "%{$search}%")
+                    ->orWhere('description', 'like', "%{$search}%")
+                    ->orWhere('category', 'like', "%{$search}%");
+                });
+            })
             ->latest()
             ->get();
 
