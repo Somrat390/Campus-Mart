@@ -15,6 +15,11 @@
         <div class="container mx-auto flex justify-between items-center">
             <h1 class="text-xl font-bold tracking-tight">Campus-Mart</h1>
             <div class="flex items-center space-x-6">
+                @if(Auth::user()->is_admin)
+                <a href="{{ route('admin.verify') }}" class="bg-yellow-400 text-blue-900 px-3 py-1 rounded-md text-sm font-bold hover:bg-yellow-300 transition">
+                    Admin: Verify Users
+                </a>
+                @endif
                 <span class="hidden md:block">Welcome, **{{ Auth::user()->name }}**</span>
                 
                 <form action="{{ route('logout') }}" method="POST" class="inline" id="logout-form">
@@ -40,12 +45,17 @@
                 <h2 class="text-2xl font-bold text-gray-800">Marketplace</h2>
                 <p class="text-gray-500 text-sm">Browsing items at **{{ Auth::user()->university->name }}**</p>
             </div>
-            <div class="flex gap-2">
-                <a href="#" class="bg-white border border-gray-300 text-gray-700 px-4 py-2.5 rounded-lg font-semibold hover:bg-gray-50 transition">My Ads</a>
-                <a href="{{ route('products.create') }}" class="bg-green-600 hover:bg-green-700 text-white px-6 py-2.5 rounded-lg font-bold shadow-md transition text-center">
-                    + Sell Something
-                </a>
-            </div>
+            <div class="flex flex-col md:flex-row md:justify-between md:items-center mb-8 gap-4">
+    
+    <div class="flex gap-2">
+        <a href="{{ route('products.myAds') }}" class="bg-white border border-gray-300 text-gray-700 px-4 py-2.5 rounded-lg font-semibold hover:bg-gray-50 transition">
+            My Ads
+        </a>
+        <a href="{{ route('products.create') }}" class="bg-green-600 hover:bg-green-700 text-white px-6 py-2.5 rounded-lg font-bold shadow-md transition text-center">
+            + Sell Something
+        </a>
+    </div>
+</div>
         </div>
 
         <div class="mb-8">

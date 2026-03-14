@@ -9,7 +9,8 @@ use Illuminate\Notifications\Notifiable;
 use Illuminate\Database\Eloquent\Relations\BelongsTo; // Add this
 use Illuminate\Database\Eloquent\Relations\HasMany;  // Add this
 
-class User extends Authenticatable
+
+class User extends Authenticatable 
 {
     /** @use HasFactory<\Database\Factories\UserFactory> */
     use HasFactory, Notifiable;
