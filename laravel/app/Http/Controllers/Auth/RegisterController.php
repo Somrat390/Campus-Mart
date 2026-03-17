@@ -7,7 +7,9 @@ use App\Models\User;
 use App\Models\University;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Auth; // Added for automatic login
+use Illuminate\Support\Facades\Mail; // Added for sending emails
+use Carbon\Carbon; // Added for OTP expiration time
 
 class RegisterController extends Controller
 {
@@ -25,33 +27,45 @@ class RegisterController extends Controller
      */
     public function register(Request $request)
     {
-        // 1. Validate the incoming data
-        $request->validate([
-            'name' => ['required', 'string', 'max:255'],
-            'email' => ['required', 'string', 'email', 'max:255', 'unique:users'],
-            'password' => ['required', 'string', 'min:8', 'confirmed'],
-            'university_id' => ['required', 'exists:universities,id'],
-            'student_id_image' => ['required', 'image', 'mimes:jpeg,png,jpg', 'max:2048'], // Max 2MB
-        ]);
+    // 1. Validation
+    $request->validate([
+        'name' => 'required|string|max:255',
+        'email' => 'required|string|email|max:255|unique:users',
+        'password' => 'required|string|min:8|confirmed',
+        'university_id' => 'required|exists:universities,id',
+        'student_id_image' => 'required|image|max:2048',
+    ]);
 
-        // 2. Handle the Student ID Image Upload
-        // This saves the file to storage/app/public/id_cards
-        $imagePath = null;
-        if ($request->hasFile('student_id_image')) {
-            $imagePath = $request->file('student_id_image')->store('id_cards', 'public');
-        }
+    // 2. DOMAIN VALIDATION (The "Software Engineer" Check)
+    $university = \App\Models\University::findOrFail($request->university_id);
+    $emailDomain = substr(strrchr($request->email, "@"), 1);
 
-        // 3. Create the User
-        $user = User::create([
-            'name' => $request->name,
-            'email' => $request->email,
-            'password' => Hash::make($request->password), // Securely hash the password
-            'university_id' => $request->university_id,
-            'student_id_image' => $imagePath,
-            'is_verified' => false, // Set to false by default for admin review
-        ]);
+    if ($emailDomain !== $university->domain) {
+        return back()->withErrors([
+            'email' => "Access Denied. Please use your @{$university->domain} email address."
+        ])->withInput();
+    }
 
-        // 4. Redirect with a success message
-        return redirect()->route('login')->with('success', 'Registration successful! Please wait for admin verification.');
+    // 3. TEMP STORAGE (Create User but Unverified)
+    $imagePath = $request->file('student_id_image')->store('id_cards', 'public');
+    $otp = rand(100000, 999999);
+
+    $user = \App\Models\User::create([
+        'name' => $request->name,
+        'email' => $request->email,
+        'password' => \Illuminate\Support\Facades\Hash::make($request->password),
+        'university_id' => $request->university_id,
+        'student_id_image' => $imagePath,
+        'otp' => $otp,
+        'otp_expires_at' => \Carbon\Carbon::now()->addMinutes(15),
+        'email_verified_at' => null, // The "Lock"
+    ]);
+
+    // 4. OTP GENERATION & MAIL
+    \Illuminate\Support\Facades\Mail::to($user->email)->send(new \App\Mail\SendOtpMail($otp));
+
+    // 5. THE WALL (Login and Redirect)
+    \Illuminate\Support\Facades\Auth::login($user);
+    return redirect()->route('otp.show');
     }
 }

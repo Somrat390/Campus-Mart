@@ -14,30 +14,34 @@ class ProductController extends Controller
     }
 
     public function store(Request $request)
-    {
-        // ... (your existing store logic)
-        $request->validate([
-            'title' => 'required|string|max:255',
-            'description' => 'required|string',
-            'price' => 'required|numeric|min:0',
-            'category' => 'required|string',
-            'image' => 'required|image|mimes:jpeg,png,jpg|max:2048',
-        ]);
+{
+    $request->validate([
+        'title' => 'required|string|max:255',
+        'price' => 'required|numeric',
+        'category' => 'required',
+        'image' => 'required|image|max:2048',
+    ]);
 
-        $path = $request->file('image')->store('products', 'public');
+    // Handle image upload
+    $path = $request->file('image')->store('products', 'public');
 
-        Product::create([
-            'title' => $request->title,
-            'description' => $request->description,
-            'price' => $request->price,
-            'category' => $request->category,
-            'image_path' => $path,
-            'status' => 'active',
-            'user_id' => Auth::id(),
-            'university_id' => Auth::user()->university_id,
-        ]);
+    // Create the product
+    \App\Models\Product::create([
+        'title' => $request->title,
+        'description' => $request->description,
+        'price' => $request->price,
+        'category' => $request->category,
+        'image_path' => $path,
+        'user_id' => auth()->id(), // The Student ID
+        
+        // --- THIS IS THE ISOLATION LOGIC ---
+        // Automatically tag the product with the student's university
+        'university_id' => auth()->user()->university_id, 
+        
+        'is_sold' => false,
+    ]);
 
-        return redirect()->route('dashboard')->with('success', 'Item posted successfully!');
+    return redirect()->route('dashboard')->with('success', 'Ad posted to your university community!');
     }
 
     /**

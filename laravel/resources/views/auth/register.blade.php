@@ -10,7 +10,17 @@
 
     <div class="bg-white p-8 rounded-lg shadow-md w-full max-w-md">
         <h2 class="text-2xl font-bold mb-6 text-center text-blue-600">Join Your Campus Market</h2>
-
+        
+        @if ($errors->any())
+        <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4 shadow-sm">
+            <strong class="font-bold">Wait! </strong>
+            <ul class="mt-2 list-disc list-inside text-sm">
+                @foreach ($errors->all() as $error)
+                    <li>{{ $error }}</li>
+                @endforeach
+            </ul>
+        </div>
+        @endif
         <form action="{{ route('register.post') }}" method="POST" enctype="multipart/form-data">
             @csrf <div class="mb-4">
                 <label class="block text-gray-700">Full Name</label>

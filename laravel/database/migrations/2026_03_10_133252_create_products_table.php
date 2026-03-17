@@ -11,18 +11,21 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('products', function (Blueprint $table) {
-            $table->id();
-            $table->string('title');
-            $table->text('description');
-            $table->decimal('price', 10, 2);
-            $table->string('image_path');
-            $table->string('category');
-            $table->string('status')->default('active'); // active, sold, etc.
-            $table->foreignId('user_id')->constrained()->onDelete('cascade');
-            $table->foreignId('university_id')->constrained()->onDelete('cascade');
-            $table->timestamps();
-        });
+    Schema::create('products', function (Blueprint $table) {
+        $table->id();
+        $table->string('title');
+        $table->text('description');
+        $table->decimal('price', 10, 2);
+        $table->string('category');
+        $table->string('image_path')->nullable();
+        $table->foreignId('user_id')->constrained()->onDelete('cascade');
+        
+        // Ensure THIS line is here:
+        $table->foreignId('university_id')->constrained()->onDelete('cascade');
+        
+        $table->boolean('is_sold')->default(false);
+        $table->timestamps();
+    });
     }
 
     /**

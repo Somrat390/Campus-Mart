@@ -14,12 +14,16 @@ class DatabaseSeeder extends Seeder
      * Seed the application's database.
      */
     public function run(): void
-    {
-        // User::factory(10)->create();
+   {
+    // 1. Run the University Seeder first so universities exist
+    $this->call(UniversitySeeder::class);
 
-        User::factory()->create([
-            'name' => 'Test User',
-            'email' => 'test@example.com',
-        ]);
+    // 2. Now create the test user with a valid university_id
+    \App\Models\User::factory()->create([
+        'name' => 'Test User',
+        'email' => 'test@example.com',
+        'university_id' => 1, // Connects to the first university created
+        'student_id_image' => 'id_cards/default.png', // Add a dummy path
+    ]);
     }
 }
