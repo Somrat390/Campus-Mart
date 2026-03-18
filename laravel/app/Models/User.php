@@ -2,16 +2,15 @@
 
 namespace App\Models;
 
-use Illuminate\Contracts\Auth\MustVerifyEmail; // 1. Uncomment this
+use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
-class User extends Authenticatable implements MustVerifyEmail // 2. Add 'implements MustVerifyEmail'
+class User extends Authenticatable implements MustVerifyEmail
 {
-    /** @use HasFactory<\Database\Factories\UserFactory> */
     use HasFactory, Notifiable;
 
     protected $fillable = [
@@ -21,8 +20,9 @@ class User extends Authenticatable implements MustVerifyEmail // 2. Add 'impleme
         'university_id',      
         'student_id_image',   
         'is_verified',
-        'otp',               // 3. Add OTP
-        'otp_expires_at',    // 4. Add OTP Expiration
+        'otp',               
+        'otp_expires_at',
+        'email_verified_at', // Added this so the OTP controller can update it
     ];
 
     protected $hidden = [
@@ -36,7 +36,7 @@ class User extends Authenticatable implements MustVerifyEmail // 2. Add 'impleme
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
             'is_verified' => 'boolean',
-            'otp_expires_at' => 'datetime', // 5. Add datetime cast for expiration
+            'otp_expires_at' => 'datetime',
         ];
     }
 

@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Auth;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use App\Models\User;
 
 class LoginController extends Controller
 {
@@ -16,28 +17,29 @@ class LoginController extends Controller
     public function login(Request $request)
     {
         $credentials = $request->validate([
-            'email' => ['required', 'email'],
-            'password' => ['required'],
+            'email' => 'required|email',
+            'password' => 'required',
         ]);
 
-        // Attempt to log the user in
-        if (Auth::attempt($credentials)) {
-            
-            // SECURITY CHECK: Is the student verified by admin?
-            if (!Auth::user()->is_verified) {
-                Auth::logout();
-                return back()->withErrors([
-                    'email' => 'Your account is pending admin verification. Please check back later.',
-                ]);
-            }
+        // 1. First, check if the user exists and if their email is verified
+        $user = User::where('email', $request->email)->first();
 
-            $request->session()->regenerate();
-            return redirect()->intended('dashboard');
+        if ($user && !$user->email_verified_at) {
+            // If not verified, kick them back to OTP page with their email
+            return redirect()->route('otp.show', ['email' => $user->email])
+                             ->with('error', 'Please verify your email address first.');
         }
 
-        return back()->withErrors([
-            'email' => 'The provided credentials do not match our records.',
-        ]);
+        // 2. Attempt the actual login
+        if (Auth::attempt($credentials)) {
+            $request->session()->regenerate();
+
+            // Success! Go to dashboard
+            return redirect()->route('dashboard')->with('success', 'Welcome back!');
+        }
+
+        // 3. If login fails
+        return back()->withErrors(['email' => 'The provided credentials do not match our records.'])->withInput();
     }
 
     public function logout(Request $request)

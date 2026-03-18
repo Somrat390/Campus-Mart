@@ -5,53 +5,65 @@ namespace App\Http\Controllers\Auth;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Carbon\Carbon;
-use Illuminate\Support\Facades\Auth;
+use App\Models\User;
 use Illuminate\Support\Facades\Mail;
 use App\Mail\SendOtpMail;
 
 class OtpController extends Controller
 {
-    public function show()
+    /**
+     * Show the OTP page. We pass the email in the URL.
+     */
+    public function show($email)
     {
-        // If they are already verified, don't show the OTP page
-        if (Auth::user()->hasVerifiedEmail()) {
-            return redirect()->route('dashboard');
-        }
-        
-        return view('auth.verify-otp');
-    }
-
-    public function verify(Request $request)
-    {
-        $request->validate([
-            'otp' => 'required|numeric|digits:6' // Added 'digits:6' for better validation
-        ]);
-
-        $user = Auth::user();
-
-        // Check if OTP matches and hasn't expired
-        if ($user->otp == $request->otp && $user->otp_expires_at && Carbon::now()->lt($user->otp_expires_at)) {
-            
-            $user->update([
-                'email_verified_at' => Carbon::now(),
-                'otp' => null, 
-                'otp_expires_at' => null
-            ]);
-
-            return redirect()->route('dashboard')->with('success', 'Email verified successfully!');
-        }
-
-        return back()->withErrors(['otp' => 'The code you entered is invalid or has expired.']);
+        return view('auth.verify-otp', compact('email'));
     }
 
     /**
-     * Handle Resending the OTP
+     * Verify the OTP and Auto-Approve the Admin status.
+     */
+    public function verify(Request $request)
+    {
+        $request->validate([
+            'otp' => 'required',
+            'email' => 'required|email',
+        ]);
+
+        // Find the user by the email provided in the hidden form field
+        $user = User::where('email', $request->email)->firstOrFail();
+
+        // 1. Check if OTP matches (forced string comparison)
+        if (trim((string)$user->otp) === trim((string)$request->otp)) {
+            
+            // 2. Check if OTP is expired
+            if ($user->otp_expires_at && Carbon::now()->isAfter($user->otp_expires_at)) {
+                return back()->withErrors(['otp' => 'This OTP has expired. Please request a new one.'])->withInput();
+            }
+
+            // 3. Success! Verify Email AND Auto-Approve Admin status
+            $user->update([
+                'email_verified_at' => now(),
+                'otp' => null, 
+                'otp_expires_at' => null,
+                'is_verified' => true, // This removes the "Admin Verification Pending" message
+            ]);
+
+            // 4. Redirect to LOGIN page (as you requested)
+            return redirect()->route('login')->with('success', 'Account verified and approved! Please login to continue.');
+        }
+
+        // 5. Failure: Return back with a visible error message
+        return back()->withErrors(['otp' => 'The code you entered is incorrect.'])->withInput();
+    }
+
+    /**
+     * Resend OTP logic for non-logged in users
      */
     public function resend(Request $request)
     {
-        $user = Auth::user();
+        $request->validate(['email' => 'required|email']);
+        $user = User::where('email', $request->email)->firstOrFail();
         
-        // Generate new code
         $otp = rand(100000, 999999);
 
         $user->update([
@@ -59,7 +71,6 @@ class OtpController extends Controller
             'otp_expires_at' => Carbon::now()->addMinutes(15),
         ]);
 
-        // Send Mail
         Mail::to($user->email)->send(new SendOtpMail($otp));
 
         return back()->with('success', 'A new verification code has been sent to your email.');
