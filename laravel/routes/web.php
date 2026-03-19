@@ -52,4 +52,5 @@ Route::middleware(['auth', 'verified'])->group(function () {
     // Admin Verification Panel
     Route::get('/admin/verify', [AdminController::class, 'index'])->name('admin.verify');
     Route::post('/admin/verify/{user}', [AdminController::class, 'approve'])->name('admin.approve');
+    Route::get('/profile', [DashboardController::class, 'profile'])->name('profile');
 });
