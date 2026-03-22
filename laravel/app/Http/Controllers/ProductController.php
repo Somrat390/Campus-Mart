@@ -111,4 +111,16 @@ class ProductController extends Controller
 
         return redirect()->route('products.myAds')->with('success', 'Ad updated successfully!');
     }
+
+    public function markAsSold(Product $product)
+    {
+    // Security: Only the owner can mark it as sold
+    if ($product->user_id !== auth()->id()) {
+        abort(403);
+    }
+
+    $product->update(['is_sold' => true]);
+
+    return back()->with('success', 'Item marked as sold and hidden from the marketplace!');
+    }
 }
