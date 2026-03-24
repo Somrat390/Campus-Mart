@@ -54,5 +54,5 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('/admin/verify/{user}', [AdminController::class, 'approve'])->name('admin.approve');
     Route::get('/profile', [DashboardController::class, 'profile'])->name('profile');
 
-    Route::patch('/products/{product}/sold', [ProductController::class, 'markAsSold'])->name('products.sold');
+   Route::patch('/products/{product}/sold', [ProductController::class, 'markAsSold'])->name('products.sold');
 });

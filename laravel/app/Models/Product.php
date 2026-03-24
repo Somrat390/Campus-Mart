@@ -16,6 +16,7 @@ class Product extends Model
         'status',
         'user_id',
         'university_id',
+        'is_sold'
     ];
 
     /**

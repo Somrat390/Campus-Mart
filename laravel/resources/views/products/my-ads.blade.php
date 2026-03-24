@@ -79,12 +79,10 @@
                                     
                                     @if(!$product->is_sold)
                                         <form action="{{ route('products.sold', $product->id) }}" method="POST">
-                                            @csrf
-                                            @method('PATCH')
-                                            <button type="submit" class="bg-yellow-50 text-yellow-600 hover:bg-yellow-100 px-3 py-1.5 rounded-lg text-xs font-bold transition">
-                                                Mark Sold
-                                            </button>
-                                        </form>
+                                        @csrf
+                                        @method('PATCH')
+                                        <button type="submit">Mark Sold</button>
+                                       </form>
 
                                         <a href="{{ route('products.edit', $product->id) }}" 
                                            class="bg-blue-50 text-blue-600 hover:bg-blue-100 px-3 py-1.5 rounded-lg text-xs font-bold transition">
