@@ -75,9 +75,9 @@
                         </div>
                     </div>
 
-                    <a href="mailto:{{ $product->user->email }}?subject=Interested in: {{ $product->title }}" 
-                       class="block w-full mt-8 bg-blue-600 text-white text-center py-4 rounded-2xl font-bold hover:bg-blue-700 transition shadow-lg shadow-blue-200">
-                        Contact Seller
+                    <a href="{{ route('chat.show', $product->id) }}" 
+                    class="block w-full mt-8 bg-blue-600 text-white text-center py-4 rounded-2xl font-bold hover:bg-blue-700 transition">
+                        Chat with Seller (Live)
                     </a>
                     
                     <p class="text-center text-[10px] text-gray-400 mt-4 uppercase font-bold tracking-tighter">

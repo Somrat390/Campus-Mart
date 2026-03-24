@@ -7,6 +7,7 @@ use App\Http\Controllers\Auth\OtpController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\AdminController;
+use App\Http\Controllers\ChatController;
 
 // --- Landing Page ---
 Route::get('/', function () {
@@ -54,5 +55,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('/admin/verify/{user}', [AdminController::class, 'approve'])->name('admin.approve');
     Route::get('/profile', [DashboardController::class, 'profile'])->name('profile');
 
-   Route::patch('/products/{product}/sold', [ProductController::class, 'markAsSold'])->name('products.sold');
+    Route::patch('/products/{product}/sold', [ProductController::class, 'markAsSold'])->name('products.sold');
+    Route::get('/chat/{product}', [ChatController::class, 'show'])->name('chat.show');
+    Route::post('/chat/{product}/send', [ChatController::class, 'send'])->name('chat.send');
 });
