@@ -50,12 +50,11 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::put('/products/{product}', [ProductController::class, 'update'])->name('products.update');
     Route::delete('/products/{product}', [ProductController::class, 'destroy'])->name('products.destroy');
 
-    // Admin Verification Panel
-    Route::get('/admin/verify', [AdminController::class, 'index'])->name('admin.verify');
-    Route::post('/admin/verify/{user}', [AdminController::class, 'approve'])->name('admin.approve');
+
     Route::get('/profile', [DashboardController::class, 'profile'])->name('profile');
 
     Route::patch('/products/{product}/sold', [ProductController::class, 'markAsSold'])->name('products.sold');
     Route::get('/chat/{product}', [ChatController::class, 'show'])->name('chat.show');
     Route::post('/chat/{product}/send', [ChatController::class, 'send'])->name('chat.send');
+    Route::get('/inbox', [ChatController::class, 'inbox'])->name('chat.inbox');
 });

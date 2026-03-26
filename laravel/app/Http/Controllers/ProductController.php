@@ -8,53 +8,50 @@ use Illuminate\Support\Facades\Auth;
 
 class ProductController extends Controller
 {
+    // Show the Form to create a new ad
     public function create()
     {
-        return view('products.create');
+        // We fetch the user's products so the table on the side/bottom doesn't error out
+        $products = Product::where('user_id', Auth::id())->latest()->get();
+        return view('products.create', compact('products'));
     }
 
+    // Handle saving the new ad
     public function store(Request $request)
-{
-    $request->validate([
-        'title' => 'required|string|max:255',
-        'price' => 'required|numeric',
-        'category' => 'required',
-        'image' => 'required|image|max:2048',
-    ]);
+    {
+        $request->validate([
+            'title' => 'required|string|max:255',
+            'price' => 'required|numeric',
+            'category' => 'required',
+            'description' => 'required|string',
+            'image' => 'required|image|max:2048',
+        ]);
 
-    // Handle image upload
-    $path = $request->file('image')->store('products', 'public');
+        // Handle image upload
+        $path = $request->file('image')->store('products', 'public');
 
-    // Create the product
-    \App\Models\Product::create([
-        'title' => $request->title,
-        'description' => $request->description,
-        'price' => $request->price,
-        'category' => $request->category,
-        'image_path' => $path,
-        'user_id' => auth()->id(), // The Student ID
-        
-        // --- THIS IS THE ISOLATION LOGIC ---
-        // Automatically tag the product with the student's university
-        'university_id' => auth()->user()->university_id, 
-        
-        'is_sold' => false,
-    ]);
+        // Create the product with University Isolation logic
+        Product::create([
+            'title' => $request->title,
+            'description' => $request->description,
+            'price' => $request->price,
+            'category' => $request->category,
+            'image_path' => $path,
+            'user_id' => auth()->id(),
+            'university_id' => auth()->user()->university_id, 
+            'is_sold' => false,
+        ]);
 
-    return redirect()->route('dashboard')->with('success', 'Ad posted to your university community!');
+        return redirect()->route('products.myAds')->with('success', 'Ad posted to your university community!');
     }
 
-    /**
-     * ADD THE SHOW METHOD HERE
-     */
     public function show(Product $product)
     {
-        // This ensures we can access the seller's name via $product->user->name
         $product->load('user');
-        
         return view('products.show', compact('product'));
     }
-    // Show only the items posted by the logged-in student
+
+    // This is the "Manage My Ads" page
     public function myAds()
     {
         $products = Product::where('user_id', Auth::id())
@@ -64,26 +61,21 @@ class ProductController extends Controller
         return view('products.my-ads', compact('products'));
     }
 
-// Delete an ad
     public function destroy(Product $product)
     {
-        // Security check: Ensure the user owns the product they are deleting
         if ($product->user_id !== Auth::id()) {
             return back()->with('error', 'Unauthorized action.');
         }
 
         $product->delete();
-
         return redirect()->route('products.myAds')->with('success', 'Ad removed successfully!');
     }
 
     public function edit(Product $product)
     {
-        // Security: Only the owner can edit
         if ($product->user_id !== Auth::id()) {
-            abort(403, 'Unauthorized action.');
+            abort(403);
         }
-
         return view('products.edit', compact('product'));
     }
 
@@ -98,7 +90,7 @@ class ProductController extends Controller
             'description' => 'required|string',
             'price' => 'required|numeric|min:0',
             'category' => 'required|string',
-            'image' => 'nullable|image|mimes:jpeg,png,jpg|max:2048',
+            'image' => 'nullable|image|max:2048',
         ]);
 
         $data = $request->only(['title', 'description', 'price', 'category']);
@@ -108,21 +100,17 @@ class ProductController extends Controller
         }
 
         $product->update($data);
-
         return redirect()->route('products.myAds')->with('success', 'Ad updated successfully!');
     }
 
     public function markAsSold(Product $product)
     {
-    // 1. Security check
-    if ($product->user_id !== auth()->id()) {
-        abort(403);
-    }
+        if ($product->user_id !== auth()->id()) {
+            abort(403);
+        }
+        $product->is_sold = 1; 
+        $product->save();
 
-    // 2. Direct assignment (bypasses fillable issues)
-    $product->is_sold = 1; 
-    $product->save();
-
-    return redirect()->route('products.myAds')->with('success', 'Item marked as sold!');
+        return redirect()->route('products.myAds')->with('success', 'Item marked as sold!');
     }
 }
