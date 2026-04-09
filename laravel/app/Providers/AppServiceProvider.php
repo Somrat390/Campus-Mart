@@ -24,6 +24,9 @@ class AppServiceProvider extends ServiceProvider
     public function boot(): void
     {
         Mail::extend('brevo', function (array $config) {
+            if (app()->environment('production')) {
+                URL::forceScheme('https');
+            }
             return (new BrevoTransportFactory(app('events'), app(HttpClientInterface::class)))->create(
                 new Dsn(
                     'brevo+api', 

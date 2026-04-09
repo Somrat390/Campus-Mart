@@ -39,7 +39,8 @@ COPY . .
 RUN composer install --no-dev --optimize-autoloader
 
 # 9. Install NPM and Build assets (This now uses the ARG keys from Step 1)
-RUN npm install && npm run build
+RUN npm install 
+RUN npm run build
 
 # 10. Set correct permissions
 RUN chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache
