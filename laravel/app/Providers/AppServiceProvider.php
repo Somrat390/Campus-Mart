@@ -29,8 +29,9 @@ class AppServiceProvider extends ServiceProvider
 
         // Register Brevo Mail Driver
         \Illuminate\Support\Facades\Mail::extend('brevo', function (array $config) {
-            // Use Guzzle (the default Laravel HTTP client) instead of the Interface
-            $httpClient = new \Symfony\Component\HttpClient\Psr18Client();
+            
+            // Use the Native Client - this avoids the PSR-17 factory error
+            $httpClient = new \Symfony\Component\HttpClient\NativeHttpClient();
 
             return (new \Symfony\Component\Mailer\Bridge\Brevo\Transport\BrevoTransportFactory(
                 app('events'), 
