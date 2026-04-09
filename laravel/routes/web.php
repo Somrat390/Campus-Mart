@@ -6,7 +6,6 @@ use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\Auth\OtpController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\ProductController;
-use App\Http\Controllers\AdminController;
 use App\Http\Controllers\ChatController;
 
 // --- Landing Page ---
@@ -22,25 +21,22 @@ Route::get('/login', [LoginController::class, 'showLoginForm'])->name('login');
 Route::post('/login', [LoginController::class, 'login'])->name('login.post');
 Route::post('/logout', [LoginController::class, 'logout'])->name('logout');
 
-// --- Public OTP Routes (NO 'auth' middleware) ---
-// We now pass {email} so the controller knows which guest to verify
+// --- Public OTP Routes ---
 Route::get('/verify-otp/{email}', [OtpController::class, 'show'])->name('otp.show');
 Route::post('/verify-otp', [OtpController::class, 'verify'])->name('otp.verify');
 Route::post('/resend-otp', [OtpController::class, 'resend'])->name('otp.resend');
 
-// This fallback helps if Laravel's internal systems look for a verification notice
+// Standard Laravel Verification Notice Fallback
 Route::get('/email/verify', function () {
     return redirect()->route('login')->with('error', 'Please login or verify your email.');
 })->name('verification.notice');
 
-
-// --- Protected Routes (Must be Authenticated AND Verified) ---
-// These routes are only accessible AFTER the user logs in AND email_verified_at is not null
-Route::middleware(['auth', 'verified'])->group(function () {
+// --- Protected Routes ---
+Route::middleware(['auth'])->group(function () {
     
-    // Dashboard & My Ads
+    // Dashboard & Profile
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
-    Route::get('/my-ads', [ProductController::class, 'myAds'])->name('products.myAds');
+    Route::get('/profile', [DashboardController::class, 'profile'])->name('profile');
 
     // Product CRUD
     Route::get('/products/create', [ProductController::class, 'create'])->name('products.create');
@@ -49,11 +45,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/products/{product}/edit', [ProductController::class, 'edit'])->name('products.edit');
     Route::put('/products/{product}', [ProductController::class, 'update'])->name('products.update');
     Route::delete('/products/{product}', [ProductController::class, 'destroy'])->name('products.destroy');
-
-
-    Route::get('/profile', [DashboardController::class, 'profile'])->name('profile');
-
     Route::patch('/products/{product}/sold', [ProductController::class, 'markAsSold'])->name('products.sold');
+    Route::get('/my-ads', [ProductController::class, 'myAds'])->name('products.myAds');
+
+    // Chat
     Route::get('/chat/{product}', [ChatController::class, 'show'])->name('chat.show');
     Route::post('/chat/{product}/send', [ChatController::class, 'send'])->name('chat.send');
     Route::get('/inbox', [ChatController::class, 'inbox'])->name('chat.inbox');

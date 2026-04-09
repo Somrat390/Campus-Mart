@@ -24,18 +24,16 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        // 1. Fix CSS/JS styling issues on Render (Moved outside Mail::extend)
-        if (app()->environment('production')) {
-            URL::forceScheme('https');
-        }
+        // FORCE HTTPS for everything on Render
+        \Illuminate\Support\Facades\URL::forceScheme('https');
 
-        // 2. Register the Brevo Mail Driver
-        Mail::extend('brevo', function (array $config) {
-            return (new BrevoTransportFactory(
+        // Keep your Brevo extension below
+        \Illuminate\Support\Facades\Mail::extend('brevo', function (array $config) {
+            return (new \Symfony\Component\Mailer\Bridge\Brevo\Transport\BrevoTransportFactory(
                 app('events'), 
-                app(HttpClientInterface::class)
+                app(\Symfony\Contracts\HttpClient\HttpClientInterface::class)
             ))->create(
-                new Dsn(
+                new \Symfony\Component\Mailer\Transport\Dsn(
                     'brevo+api', 
                     'default', 
                     config('services.brevo.key')

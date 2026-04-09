@@ -11,6 +11,10 @@ class LoginController extends Controller
 {
     public function showLoginForm()
     {
+        // If already logged in, go to dashboard
+        if (Auth::check()) {
+            return redirect()->route('dashboard');
+        }
         return view('auth.login');
     }
 
@@ -21,24 +25,29 @@ class LoginController extends Controller
             'password' => 'required',
         ]);
 
-        // 1. First, check if the user exists and if their email is verified
+        // 1. Check if the user exists
         $user = User::where('email', $request->email)->first();
 
-        if ($user && !$user->email_verified_at) {
-            // If not verified, kick them back to OTP page with their email
+        if (!$user) {
+            return back()->withErrors(['email' => 'No account found with this email.'])->withInput();
+        }
+
+        // 2. Check if email is verified OR if your admin-verify flag is false
+        // Based on your previous files, 'is_verified' is your main check
+        if (!$user->email_verified_at || !$user->is_verified) {
             return redirect()->route('otp.show', ['email' => $user->email])
                              ->with('error', 'Please verify your email address first.');
         }
 
-        // 2. Attempt the actual login
-        if (Auth::attempt($credentials)) {
+        // 3. Attempt the actual login
+        if (Auth::attempt($credentials, $request->has('remember'))) {
             $request->session()->regenerate();
 
-            // Success! Go to dashboard
-            return redirect()->route('dashboard')->with('success', 'Welcome back!');
+            return redirect()->intended(route('dashboard'))
+                             ->with('success', 'Welcome back, ' . $user->name . '!');
         }
 
-        // 3. If login fails
+        // 4. If password fails
         return back()->withErrors(['email' => 'The provided credentials do not match our records.'])->withInput();
     }
 
