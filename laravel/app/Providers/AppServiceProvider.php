@@ -30,18 +30,10 @@ class AppServiceProvider extends ServiceProvider
         // Register Brevo Mail Driver
         \Illuminate\Support\Facades\Mail::extend('brevo', function (array $config) {
             
-            // Use the Native Client - this avoids the PSR-17 factory error
-            $httpClient = new \Symfony\Component\HttpClient\NativeHttpClient();
-
-            return (new \Symfony\Component\Mailer\Bridge\Brevo\Transport\BrevoTransportFactory(
-                app('events'), 
-                $httpClient
-            ))->create(
-                new \Symfony\Component\Mailer\Transport\Dsn(
-                    'brevo+api', 
-                    'default', 
-                    config('services.brevo.key')
-                )
+            // Use the API Transport directly to avoid the "Dispatcher" error
+            return new \Symfony\Component\Mailer\Bridge\Brevo\Transport\BrevoApiTransport(
+                config('services.brevo.key'),
+                new \Symfony\Component\HttpClient\NativeHttpClient()
             );
         });
     }
