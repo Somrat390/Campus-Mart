@@ -50,4 +50,4 @@ RUN sed -i 's|/var/www/html|/var/www/html/public|g' /etc/apache2/sites-available
 
 EXPOSE 80
 
-CMD ["apache2-foreground"]
+CMD php artisan config:clear && php artisan view:clear && apache2-foreground
