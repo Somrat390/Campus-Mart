@@ -27,11 +27,14 @@ class AppServiceProvider extends ServiceProvider
         // FORCE HTTPS for everything on Render
         \Illuminate\Support\Facades\URL::forceScheme('https');
 
-        // Keep your Brevo extension below
+        // Register Brevo Mail Driver
         \Illuminate\Support\Facades\Mail::extend('brevo', function (array $config) {
+            // Use Guzzle (the default Laravel HTTP client) instead of the Interface
+            $httpClient = new \Symfony\Component\HttpClient\Psr18Client();
+
             return (new \Symfony\Component\Mailer\Bridge\Brevo\Transport\BrevoTransportFactory(
                 app('events'), 
-                app(\Symfony\Contracts\HttpClient\HttpClientInterface::class)
+                $httpClient
             ))->create(
                 new \Symfony\Component\Mailer\Transport\Dsn(
                     'brevo+api', 
