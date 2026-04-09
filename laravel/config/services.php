@@ -35,4 +35,8 @@ return [
         ],
     ],
 
+    // ADD THIS BLOCK BELOW
+    'brevo' => [
+        'key' => env('BREVO_API_KEY'),
+    ],
 ];
