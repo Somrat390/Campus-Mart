@@ -1,6 +1,13 @@
 FROM php:8.2-apache
 
-# Install system dependencies + Node.js (needed for Vite)
+# 1. Define Build Arguments for Vite (Pusher/Chat)
+# These allow Render to "pass" your keys into the JavaScript bundle
+ARG VITE_PUSHER_APP_KEY
+ARG VITE_PUSHER_APP_CLUSTER
+ENV VITE_PUSHER_APP_KEY=$VITE_PUSHER_APP_KEY
+ENV VITE_PUSHER_APP_CLUSTER=$VITE_PUSHER_APP_CLUSTER
+
+# 2. Install system dependencies + Node.js
 RUN apt-get update && apt-get install -y \
     libpng-dev \
     libonig-dev \
@@ -12,35 +19,33 @@ RUN apt-get update && apt-get install -y \
     libpq-dev \
     gnupg
 
-# Install Node.js 20.x (Current stable for 2026)
+# 3. Install Node.js 20.x
 RUN curl -fsSL https://deb.nodesource.com/setup_20.x | bash - \
     && apt-get install -y nodejs
 
-# Install PHP extensions
+# 4. Install PHP extensions
 RUN docker-php-ext-install pdo_mysql pdo_pgsql mbstring exif pcntl bcmath gd
 
-# Get latest Composer
+# 5. Get latest Composer
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 
-# Set working directory
+# 6. Set working directory
 WORKDIR /var/www/html
 
-# Copy all project files
+# 7. Copy all project files
 COPY . .
 
-# Install Laravel dependencies
+# 8. Install Laravel dependencies (including the new Brevo driver)
 RUN composer install --no-dev --optimize-autoloader
 
-# Install NPM dependencies and build assets for production
+# 9. Install NPM and Build assets (This now uses the ARG keys from Step 1)
 RUN npm install && npm run build
 
-# Set correct permissions
+# 10. Set correct permissions
 RUN chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache
 
-# Enable Apache Mod Rewrite
+# 11. Apache Configuration
 RUN a2enmod rewrite
-
-# Update Apache config
 RUN sed -i 's|/var/www/html|/var/www/html/public|g' /etc/apache2/sites-available/000-default.conf
 
 EXPOSE 80
