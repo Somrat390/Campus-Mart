@@ -37,7 +37,7 @@ return [
 
     // --- BREVO CONFIGURATION (For OTP Emails) ---
     'brevo' => [
-        'key' => env('BREVO_API_KEY'),
+        'key' => trim(env('BREVO_API_KEY')),
     ],
 
     // --- PUSHER CONFIGURATION (For Real-time Chat) ---

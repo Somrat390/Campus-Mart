@@ -24,15 +24,14 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        // FORCE HTTPS for everything on Render
         \Illuminate\Support\Facades\URL::forceScheme('https');
 
-        // Register Brevo Mail Driver
         \Illuminate\Support\Facades\Mail::extend('brevo', function (array $config) {
+            // Direct read from ENV to avoid cache issues
+            $key = trim(env('BREVO_API_KEY'));
             
-            // Use the API Transport directly to avoid the "Dispatcher" error
             return new \Symfony\Component\Mailer\Bridge\Brevo\Transport\BrevoApiTransport(
-                config('services.brevo.key'),
+                $key,
                 new \Symfony\Component\HttpClient\NativeHttpClient()
             );
         });
