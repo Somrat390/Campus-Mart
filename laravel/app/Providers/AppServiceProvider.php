@@ -1,6 +1,7 @@
 <?php
 
 namespace App\Providers;
+
 use Illuminate\Support\Facades\URL;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Support\Facades\Mail;
@@ -23,11 +24,17 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        // 1. Fix CSS/JS styling issues on Render (Moved outside Mail::extend)
+        if (app()->environment('production')) {
+            URL::forceScheme('https');
+        }
+
+        // 2. Register the Brevo Mail Driver
         Mail::extend('brevo', function (array $config) {
-            if (app()->environment('production')) {
-                URL::forceScheme('https');
-            }
-            return (new BrevoTransportFactory(app('events'), app(HttpClientInterface::class)))->create(
+            return (new BrevoTransportFactory(
+                app('events'), 
+                app(HttpClientInterface::class)
+            ))->create(
                 new Dsn(
                     'brevo+api', 
                     'default', 
