@@ -48,9 +48,13 @@
     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
         @forelse($products as $product)
             <a href="{{ route('products.show', $product->id) }}" class="group block">
-                <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden product-card group-hover:shadow-2xl group-hover:-translate-y-2">
+                <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden product-card group-hover:shadow-2xl group-hover:-translate-y-2 transition-all duration-300">
                     <div class="relative h-56 bg-gray-200">
-                        <img src="{{ asset('storage/' . $product->image_path) }}" class="w-full h-full object-cover">
+                        {{-- SMART IMAGE LOGIC: Checks if it's a Cloudinary URL or Local Storage --}}
+                        <img src="{{ str_starts_with($product->image_path, 'http') ? $product->image_path : asset('storage/' . $product->image_path) }}" 
+                             class="w-full h-full object-cover"
+                             onerror="this.src='https://placehold.co/600x400?text=No+Image+Found'">
+                        
                         <span class="absolute top-3 right-3 bg-white/95 px-3 py-1 rounded-full text-[10px] font-black uppercase text-blue-600 shadow-sm">{{ $product->category }}</span>
                     </div>
                     <div class="p-6">
