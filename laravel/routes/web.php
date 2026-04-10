@@ -1,5 +1,27 @@
 <?php
 
+
+use Illuminate\Support\Facades\Schema;
+use Illuminate\Database\Schema\Blueprint;
+
+// EMERGENCY DB FIX: Visit /fix-db once after deploying
+Route::get('/fix-db', function () {
+    try {
+        // 1. Drop the table if it's broken
+        Schema::dropIfExists('password_reset_tokens');
+        
+        // 2. Recreate it with the correct 'email' column
+        Schema::create('password_reset_tokens', function (Blueprint $table) {
+            $table->string('email')->primary();
+            $table->string('token');
+            $table->timestamp('created_at')->nullable();
+        });
+
+        return "Database table 'password_reset_tokens' fixed successfully! Now try forgot password.";
+    } catch (\Exception $e) {
+        return "Error fixing database: " . $e->getMessage();
+    }
+});
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Auth\RegisterController;
 use App\Http\Controllers\Auth\LoginController;
