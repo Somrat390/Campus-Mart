@@ -4,7 +4,6 @@ namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Password;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
@@ -22,21 +21,21 @@ class ForgotPasswordController extends Controller
 
         $token = Str::random(64);
 
-        // Store token in password_resets table
+        // Update or Insert into the fixed table
         DB::table('password_reset_tokens')->updateOrInsert(
             ['email' => $request->email],
             ['token' => $token, 'created_at' => now()]
         );
 
-        // Send Email (Using your working Brevo system)
         $resetLink = route('password.reset', ['token' => $token, 'email' => $request->email]);
         
+        // Sending the HTML reset link
         Mail::send([], [], function ($message) use ($request, $resetLink) {
             $message->to($request->email)
                 ->subject('Reset Password Notification')
                 ->html("<h3>Password Reset Request</h3>
-                       <p>Click the link below to reset your password:</p>
-                       <a href='{$resetLink}'>Reset Password</a>");
+                       <p>Click the link below to reset your password for Campus-Mart:</p>
+                       <a href='{$resetLink}' style='padding:10px; background:blue; color:white; text-decoration:none; border-radius:5px;'>Reset Password</a>");
         });
 
         return back()->with('success', 'We have emailed your password reset link!');
@@ -59,15 +58,17 @@ class ForgotPasswordController extends Controller
             ->first();
 
         if (!$record) {
-            return back()->withErrors(['email' => 'Invalid token!']);
+            return back()->withErrors(['email' => 'Invalid or expired token!']);
         }
 
+        // Update the password
         User::where('email', $request->email)->update([
             'password' => Hash::make($request->password)
         ]);
 
+        // Delete the token
         DB::table('password_reset_tokens')->where(['email' => $request->email])->delete();
 
-        return redirect()->route('login')->with('success', 'Your password has been reset!');
+        return redirect()->route('login')->with('success', 'Your password has been reset! Please login.');
     }
 }

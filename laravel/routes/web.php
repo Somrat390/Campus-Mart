@@ -1,28 +1,8 @@
 <?php
 
-
+use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Database\Schema\Blueprint;
-
-// EMERGENCY DB FIX: Visit /fix-db once after deploying
-Route::get('/fix-db', function () {
-    try {
-        // 1. Drop the table if it's broken
-        Schema::dropIfExists('password_reset_tokens');
-        
-        // 2. Recreate it with the correct 'email' column
-        Schema::create('password_reset_tokens', function (Blueprint $table) {
-            $table->string('email')->primary();
-            $table->string('token');
-            $table->timestamp('created_at')->nullable();
-        });
-
-        return "Database table 'password_reset_tokens' fixed successfully! Now try forgot password.";
-    } catch (\Exception $e) {
-        return "Error fixing database: " . $e->getMessage();
-    }
-});
-use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Auth\RegisterController;
 use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\Auth\OtpController;
@@ -30,6 +10,22 @@ use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\ChatController;
 use App\Http\Controllers\Auth\ForgotPasswordController;
+
+// --- EMERGENCY DB FIX ---
+// Visit this once: https://campus-mart-3.onrender.com/fix-db
+Route::get('/fix-db', function () {
+    try {
+        Schema::dropIfExists('password_reset_tokens');
+        Schema::create('password_reset_tokens', function (Blueprint $table) {
+            $table->string('email')->primary();
+            $table->string('token');
+            $table->timestamp('created_at')->nullable();
+        });
+        return "✅ Database table 'password_reset_tokens' fixed! Now try Forgot Password.";
+    } catch (\Exception $e) {
+        return "❌ Error: " . $e->getMessage();
+    }
+});
 
 // --- Landing Page ---
 Route::get('/', function () {
@@ -44,20 +40,23 @@ Route::get('/login', [LoginController::class, 'showLoginForm'])->name('login');
 Route::post('/login', [LoginController::class, 'login'])->name('login.post');
 Route::post('/logout', [LoginController::class, 'logout'])->name('logout');
 
+// --- Forgot Password Routes ---
+Route::get('/forgot-password', [ForgotPasswordController::class, 'showLinkRequestForm'])->name('password.request');
+Route::post('/forgot-password', [ForgotPasswordController::class, 'sendResetLinkEmail'])->name('password.email');
+Route::get('/reset-password/{token}', [ForgotPasswordController::class, 'showResetForm'])->name('password.reset');
+Route::post('/reset-password', [ForgotPasswordController::class, 'reset'])->name('password.update');
+
 // --- Public OTP Routes ---
 Route::get('/verify-otp/{email}', [OtpController::class, 'show'])->name('otp.show');
 Route::post('/verify-otp', [OtpController::class, 'verify'])->name('otp.verify');
 Route::post('/resend-otp', [OtpController::class, 'resend'])->name('otp.resend');
 
-// Standard Laravel Verification Notice Fallback
 Route::get('/email/verify', function () {
     return redirect()->route('login')->with('error', 'Please login or verify your email.');
 })->name('verification.notice');
 
 // --- Protected Routes ---
 Route::middleware(['auth'])->group(function () {
-    
-    // Dashboard & Profile
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
     Route::get('/profile', [DashboardController::class, 'profile'])->name('profile');
 
@@ -76,8 +75,3 @@ Route::middleware(['auth'])->group(function () {
     Route::post('/chat/{product}/send', [ChatController::class, 'send'])->name('chat.send');
     Route::get('/inbox', [ChatController::class, 'inbox'])->name('chat.inbox');
 });
-
-Route::get('/forgot-password', [ForgotPasswordController::class, 'showLinkRequestForm'])->name('password.request');
-Route::post('/forgot-password', [ForgotPasswordController::class, 'sendResetLinkEmail'])->name('password.email');
-Route::get('/reset-password/{token}', [ForgotPasswordController::class, 'showResetForm'])->name('password.reset');
-Route::post('/reset-password', [ForgotPasswordController::class, 'reset'])->name('password.update');
