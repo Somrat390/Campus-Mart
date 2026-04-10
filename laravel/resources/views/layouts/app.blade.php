@@ -16,6 +16,13 @@
     <nav class="bg-blue-600 p-4 text-white shadow-lg">
         <div class="container mx-auto flex justify-between items-center">
             <a href="{{ route('dashboard') }}" class="text-xl font-bold tracking-tight">Campus-Mart</a>
+            @auth
+            @if(auth()->id() === 1)
+                <a href="{{ route('admin.users') }}" class="text-red-600 font-bold hover:text-red-800 px-3 py-2 border border-red-200 rounded-lg bg-red-50 transition">
+                    🛡️ Admin Panel
+                </a>
+            @endif
+            @endauth
             
             <div class="flex items-center space-x-4 md:space-x-6">
                 

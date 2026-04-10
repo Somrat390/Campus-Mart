@@ -111,4 +111,8 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/chat/{product}', [ChatController::class, 'show'])->name('chat.show');
     Route::post('/chat/{product}/send', [ChatController::class, 'send'])->name('chat.send');
     Route::get('/inbox', [ChatController::class, 'inbox'])->name('chat.inbox');
+
+    Route::get('/admin/users', [App\Http\Controllers\AdminController::class, 'index'])->name('admin.users');
+    Route::post('/admin/users/{user}/verify', [App\Http\Controllers\AdminController::class, 'verify'])->name('admin.verify');
+    Route::delete('/admin/users/{user}', [App\Http\Controllers\AdminController::class, 'destroy'])->name('admin.delete');
 });
