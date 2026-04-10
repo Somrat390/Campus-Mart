@@ -7,6 +7,7 @@ use App\Http\Controllers\Auth\OtpController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\ChatController;
+use App\Http\Controllers\Auth\ForgotPasswordController;
 
 // --- Landing Page ---
 Route::get('/', function () {
@@ -53,3 +54,8 @@ Route::middleware(['auth'])->group(function () {
     Route::post('/chat/{product}/send', [ChatController::class, 'send'])->name('chat.send');
     Route::get('/inbox', [ChatController::class, 'inbox'])->name('chat.inbox');
 });
+
+Route::get('/forgot-password', [ForgotPasswordController::class, 'showLinkRequestForm'])->name('password.request');
+Route::post('/forgot-password', [ForgotPasswordController::class, 'sendResetLinkEmail'])->name('password.email');
+Route::get('/reset-password/{token}', [ForgotPasswordController::class, 'showResetForm'])->name('password.reset');
+Route::post('/reset-password', [ForgotPasswordController::class, 'reset'])->name('password.update');
