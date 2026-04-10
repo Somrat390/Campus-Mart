@@ -11,6 +11,7 @@ use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\ChatController;
 use App\Http\Controllers\Auth\ForgotPasswordController;
+use App\Http\Controllers\AdminController;
 
 /*
 |--------------------------------------------------------------------------
