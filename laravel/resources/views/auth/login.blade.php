@@ -12,7 +12,7 @@
         <h2 class="text-2xl font-bold mb-6 text-center text-blue-600">Login to Campus-Mart</h2>
 
         @if (session('success'))
-            <div class="mb-4 p-3 bg-green-100 text-green-700 rounded-lg text-sm">
+            <div class="mb-4 p-3 bg-green-100 text-green-700 rounded-lg text-sm text-center">
                 {{ session('success') }}
             </div>
         @endif
@@ -30,15 +30,20 @@
         <form action="{{ route('login.post') }}" method="POST">
             @csrf
             
-
             <div class="mb-4">
                 <label class="block text-gray-700 font-semibold mb-2">University Email</label>
                 <input type="email" name="email" value="{{ old('email') }}" class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" required>
             </div>
 
-            <div class="mb-6">
+            <div class="mb-2">
                 <label class="block text-gray-700 font-semibold mb-2">Password</label>
                 <input type="password" name="password" class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" required>
+            </div>
+
+            <div class="mb-6 text-right">
+                <a href="{{ route('password.request') }}" class="text-sm text-blue-600 hover:underline">
+                    Forgot Password?
+                </a>
             </div>
 
             <button type="submit" class="w-full bg-blue-600 text-white py-2 rounded-lg font-semibold hover:bg-blue-700 transition duration-200">
