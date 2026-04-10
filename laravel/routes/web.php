@@ -43,6 +43,13 @@ Route::get('/fix-storage', function () {
     }
 });
 
+Route::get('/clear-all', function() {
+    Artisan::call('config:clear');
+    Artisan::call('cache:clear');
+    Artisan::call('view:clear');
+    return "✅ All caches cleared! Cloudinary should now see your keys.";
+});
+
 
 /*
 |--------------------------------------------------------------------------
