@@ -13,21 +13,14 @@ use App\Mail\SendOtpMail;
 
 class RegisterController extends Controller
 {
-    /**
-     * Show the registration form with the list of universities.
-     */
     public function showRegistrationForm()
     {
         $universities = University::all();
         return view('auth.register', compact('universities'));
     }
 
-    /**
-     * Handle an incoming registration request.
-     */
     public function register(Request $request)
     {
-        // 1. Validation
         $request->validate([
             'name' => 'required|string|max:255',
             'email' => 'required|string|email|max:255|unique:users',
@@ -36,7 +29,6 @@ class RegisterController extends Controller
             'student_id_image' => 'required|image|max:2048',
         ]);
 
-        // 2. DOMAIN VALIDATION
         $university = University::findOrFail($request->university_id);
         $emailDomain = substr(strrchr($request->email, "@"), 1);
 
@@ -46,11 +38,10 @@ class RegisterController extends Controller
             ])->withInput();
         }
 
-        // 3. STORAGE & OTP GENERATION
+        // FORCE storage to public disk
         $imagePath = $request->file('student_id_image')->store('id_cards', 'public');
         $otp = rand(100000, 999999);
 
-        // 4. Create User (Unverified)
         $user = User::create([
             'name' => $request->name,
             'email' => $request->email,
@@ -58,16 +49,14 @@ class RegisterController extends Controller
             'university_id' => $request->university_id,
             'student_id_image' => $imagePath,
             'otp' => $otp,
-            'otp_expires_at' => Carbon::now()->addMinutes(15), // Increased to 15 for better UX
-            'is_verified' => false, // Initial Admin status
+            'otp_expires_at' => Carbon::now()->addMinutes(15),
+            'is_verified' => false,
             'email_verified_at' => null, 
         ]);
 
-        // 5. SEND MAIL
         Mail::to($user->email)->send(new SendOtpMail($otp));
 
-        // 6. REDIRECT to OTP page (passing email to identify user)
         return redirect()->route('otp.show', ['email' => $user->email])
-                         ->with('success', 'Registration successful! An OTP has been sent to your university email.');
+                         ->with('success', 'Registration successful! Check your university email for OTP.');
     }
 }

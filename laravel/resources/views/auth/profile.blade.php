@@ -27,31 +27,22 @@
                         <label class="text-xs font-bold text-gray-400 uppercase tracking-wider">Full Name</label>
                         <p class="text-lg text-gray-800 font-semibold">{{ $user->name }}</p>
                     </div>
-
                     <div>
                         <label class="text-xs font-bold text-gray-400 uppercase tracking-wider">University Email</label>
                         <p class="text-lg text-gray-800 font-semibold">{{ $user->email }}</p>
                     </div>
-
                     <div>
                         <label class="text-xs font-bold text-gray-400 uppercase tracking-wider">Campus</label>
                         <p class="text-lg text-gray-800 font-semibold">{{ $user->university->name ?? 'N/A' }}</p>
-                    </div>
-
-                    <div>
-                        <label class="text-xs font-bold text-gray-400 uppercase tracking-wider">Status</label>
-                        <div class="mt-1">
-                            <span class="px-3 py-1 bg-green-100 text-green-700 text-sm font-bold rounded-full">
-                                Verified Student
-                            </span>
-                        </div>
                     </div>
                 </div>
 
                 <div class="bg-gray-50 p-6 rounded-xl border border-dashed border-gray-300">
                     <label class="text-xs font-bold text-gray-400 uppercase tracking-wider mb-3 block">Uploaded Student ID</label>
                     @if($user->student_id_image)
-                        <img src="{{ asset('storage/' . $user->student_id_image) }}" class="w-full rounded-lg shadow-md cursor-zoom-in" onclick="window.open(this.src)">
+                        <img src="{{ asset('storage/' . $user->student_id_image) }}" 
+                             class="w-full rounded-lg shadow-md border bg-white" 
+                             onerror="this.src='https://placehold.co/400x250?text=ID+Image+Pending'">
                     @else
                         <p class="text-gray-400 italic">No ID Image Found</p>
                     @endif

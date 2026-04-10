@@ -5,18 +5,16 @@ namespace App\Http\Controllers;
 use App\Models\Product;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Storage;
 
 class ProductController extends Controller
 {
-    // Show the Form to create a new ad
     public function create()
     {
-        // We fetch the user's products so the table on the side/bottom doesn't error out
         $products = Product::where('user_id', Auth::id())->latest()->get();
         return view('products.create', compact('products'));
     }
 
-    // Handle saving the new ad
     public function store(Request $request)
     {
         $request->validate([
@@ -27,10 +25,9 @@ class ProductController extends Controller
             'image' => 'required|image|max:2048',
         ]);
 
-        // Handle image upload
+        // Save to 'public' folder inside storage
         $path = $request->file('image')->store('products', 'public');
 
-        // Create the product with University Isolation logic
         Product::create([
             'title' => $request->title,
             'description' => $request->description,
@@ -42,7 +39,7 @@ class ProductController extends Controller
             'is_sold' => false,
         ]);
 
-        return redirect()->route('products.myAds')->with('success', 'Ad posted to your university community!');
+        return redirect()->route('products.myAds')->with('success', 'Ad posted successfully!');
     }
 
     public function show(Product $product)
@@ -51,39 +48,21 @@ class ProductController extends Controller
         return view('products.show', compact('product'));
     }
 
-    // This is the "Manage My Ads" page
     public function myAds()
     {
-        $products = Product::where('user_id', Auth::id())
-            ->latest()
-            ->get();
-
+        $products = Product::where('user_id', Auth::id())->latest()->get();
         return view('products.my-ads', compact('products'));
-    }
-
-    public function destroy(Product $product)
-    {
-        if ($product->user_id !== Auth::id()) {
-            return back()->with('error', 'Unauthorized action.');
-        }
-
-        $product->delete();
-        return redirect()->route('products.myAds')->with('success', 'Ad removed successfully!');
     }
 
     public function edit(Product $product)
     {
-        if ($product->user_id !== Auth::id()) {
-            abort(403);
-        }
+        if ($product->user_id !== Auth::id()) abort(403);
         return view('products.edit', compact('product'));
     }
 
     public function update(Request $request, Product $product)
     {
-        if ($product->user_id !== Auth::id()) {
-            abort(403);
-        }
+        if ($product->user_id !== Auth::id()) abort(403);
 
         $request->validate([
             'title' => 'required|string|max:255',
@@ -96,21 +75,29 @@ class ProductController extends Controller
         $data = $request->only(['title', 'description', 'price', 'category']);
 
         if ($request->hasFile('image')) {
+            // Delete old image if it exists
+            if ($product->image_path) {
+                Storage::disk('public')->delete($product->image_path);
+            }
             $data['image_path'] = $request->file('image')->store('products', 'public');
         }
 
         $product->update($data);
-        return redirect()->route('products.myAds')->with('success', 'Ad updated successfully!');
+        return redirect()->route('products.myAds')->with('success', 'Ad updated!');
+    }
+
+    public function destroy(Product $product)
+    {
+        if ($product->user_id !== Auth::id()) return back()->with('error', 'Unauthorized.');
+        if ($product->image_path) Storage::disk('public')->delete($product->image_path);
+        $product->delete();
+        return redirect()->route('products.myAds')->with('success', 'Ad removed!');
     }
 
     public function markAsSold(Product $product)
     {
-        if ($product->user_id !== auth()->id()) {
-            abort(403);
-        }
-        $product->is_sold = 1; 
-        $product->save();
-
+        if ($product->user_id !== auth()->id()) abort(403);
+        $product->update(['is_sold' => true]);
         return redirect()->route('products.myAds')->with('success', 'Item marked as sold!');
     }
 }
