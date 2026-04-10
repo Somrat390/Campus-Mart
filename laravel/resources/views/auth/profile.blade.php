@@ -40,11 +40,12 @@
                 <div class="bg-gray-50 p-6 rounded-xl border border-dashed border-gray-300">
                     <label class="text-xs font-bold text-gray-400 uppercase tracking-wider mb-3 block">Uploaded Student ID</label>
                     @if($user->student_id_image)
-                        <img src="{{ asset('storage/' . $user->student_id_image) }}" 
+                        {{-- Smart Image Logic: Cloudinary vs Local Storage --}}
+                        <img src="{{ str_starts_with($user->student_id_image, 'http') ? $user->student_id_image : asset('storage/' . $user->student_id_image) }}" 
                              class="w-full rounded-lg shadow-md border bg-white" 
                              onerror="this.src='https://placehold.co/400x250?text=ID+Image+Pending'">
                     @else
-                        <p class="text-gray-400 italic">No ID Image Found</p>
+                        <p class="text-gray-400 italic text-center py-10">No ID Image Found</p>
                     @endif
                 </div>
             </div>

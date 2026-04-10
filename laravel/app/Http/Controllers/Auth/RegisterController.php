@@ -10,6 +10,7 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Mail;
 use Carbon\Carbon;
 use App\Mail\SendOtpMail;
+use CloudinaryLabs\CloudinaryLaravel\Facades\Cloudinary;
 
 class RegisterController extends Controller
 {
@@ -38,8 +39,13 @@ class RegisterController extends Controller
             ])->withInput();
         }
 
-        // FORCE storage to public disk
-        $imagePath = $request->file('student_id_image')->store('id_cards', 'public');
+        // --- CLOUDINARY UPLOAD START ---
+        // This sends the ID card to Cloudinary instead of Render's temporary storage
+        $uploadedFileUrl = Cloudinary::upload($request->file('student_id_image')->getRealPath(), [
+            'folder' => 'id_cards'
+        ])->getSecurePath();
+        // --- CLOUDINARY UPLOAD END ---
+
         $otp = rand(100000, 999999);
 
         $user = User::create([
@@ -47,7 +53,7 @@ class RegisterController extends Controller
             'email' => $request->email,
             'password' => Hash::make($request->password),
             'university_id' => $request->university_id,
-            'student_id_image' => $imagePath,
+            'student_id_image' => $uploadedFileUrl, // Now storing the HTTPS Cloudinary URL
             'otp' => $otp,
             'otp_expires_at' => Carbon::now()->addMinutes(15),
             'is_verified' => false,

@@ -6,7 +6,11 @@
         <div class="flex flex-col md:flex-row">
             
             <div class="md:w-1/2 bg-gray-50">
-                <img src="{{ asset('storage/' . $product->image_path) }}" alt="{{ $product->title }}" class="w-full h-[400px] object-cover">
+                {{-- Smart Image Logic: Cloudinary vs Local Storage --}}
+                <img src="{{ str_starts_with($product->image_path, 'http') ? $product->image_path : asset('storage/' . $product->image_path) }}" 
+                     alt="{{ $product->title }}" 
+                     class="w-full h-[400px] object-cover"
+                     onerror="this.src='https://placehold.co/600x400?text=Product+Image+Not+Found'">
             </div>
 
             <div class="md:w-1/2 p-8 md:p-12 flex flex-col">
@@ -25,7 +29,7 @@
                 <div class="mt-auto p-4 bg-gray-50 rounded-2xl border border-gray-100 flex items-center justify-between">
                     <div class="flex items-center">
                         <div class="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center text-blue-600 font-bold mr-3">
-                            {{ substr($product->user->name, 0, 1) }}
+                            {{ strtoupper(substr($product->user->name, 0, 1)) }}
                         </div>
                         <div>
                             <p class="text-xs text-gray-500 font-bold uppercase">Seller</p>

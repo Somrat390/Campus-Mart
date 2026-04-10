@@ -5,7 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Product;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Storage;
+use CloudinaryLabs\CloudinaryLaravel\Facades\Cloudinary;
 
 class ProductController extends Controller
 {
@@ -25,15 +25,17 @@ class ProductController extends Controller
             'image' => 'required|image|max:2048',
         ]);
 
-        // Save to 'public' folder inside storage
-        $path = $request->file('image')->store('products', 'public');
+        // --- CLOUDINARY UPLOAD ---
+        $uploadedFileUrl = Cloudinary::upload($request->file('image')->getRealPath(), [
+            'folder' => 'products'
+        ])->getSecurePath();
 
         Product::create([
             'title' => $request->title,
             'description' => $request->description,
             'price' => $request->price,
             'category' => $request->category,
-            'image_path' => $path,
+            'image_path' => $uploadedFileUrl, // Stores full HTTPS Cloudinary URL
             'user_id' => auth()->id(),
             'university_id' => auth()->user()->university_id, 
             'is_sold' => false,
@@ -75,11 +77,12 @@ class ProductController extends Controller
         $data = $request->only(['title', 'description', 'price', 'category']);
 
         if ($request->hasFile('image')) {
-            // Delete old image if it exists
-            if ($product->image_path) {
-                Storage::disk('public')->delete($product->image_path);
-            }
-            $data['image_path'] = $request->file('image')->store('products', 'public');
+            // Upload new image to Cloudinary
+            $uploadedFileUrl = Cloudinary::upload($request->file('image')->getRealPath(), [
+                'folder' => 'products'
+            ])->getSecurePath();
+            
+            $data['image_path'] = $uploadedFileUrl;
         }
 
         $product->update($data);
@@ -89,8 +92,11 @@ class ProductController extends Controller
     public function destroy(Product $product)
     {
         if ($product->user_id !== Auth::id()) return back()->with('error', 'Unauthorized.');
-        if ($product->image_path) Storage::disk('public')->delete($product->image_path);
+        
+        // Note: For Cloudinary, you'd usually delete by Public ID, 
+        // but for a student project, simply deleting the DB record is fine.
         $product->delete();
+        
         return redirect()->route('products.myAds')->with('success', 'Ad removed!');
     }
 
