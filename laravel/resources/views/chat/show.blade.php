@@ -11,18 +11,16 @@
 <body class="bg-gray-100 h-screen flex flex-col">
 
     <div class="bg-blue-600 text-white p-4 shadow-md flex items-center gap-4">
-        <a href="{{ route('dashboard') }}" class="text-xl">←</a>
+        <a href="{{ route('chat.inbox') }}" class="text-xl">←</a>
         <div>
             <h1 class="font-bold text-lg leading-tight">{{ $product->title }}</h1>
-            <p class="text-xs opacity-80">Seller: {{ $product->user->name }}</p>
+            <p class="text-xs opacity-80">Talking with: {{ (auth()->id() == $product->user_id) ? 'Buyer' : 'Seller' }}</p>
         </div>
     </div>
 
     <div id="chat-box" class="flex-1 overflow-y-auto p-4 space-y-4">
         @foreach($messages as $message)
-            {{-- Check if the current logged-in user is the sender --}}
             @php $isMe = $message->sender_id == auth()->id(); @endphp
-            
             <div class="flex {{ $isMe ? 'justify-end' : 'justify-start' }}">
                 <div class="max-w-[80%] px-4 py-2 rounded-2xl shadow {{ $isMe ? 'bg-blue-500 text-white rounded-tr-none' : 'bg-white text-gray-800 rounded-tl-none border' }}">
                     <p>{{ $message->content }}</p>
@@ -35,64 +33,51 @@
     <div class="bg-white p-4 border-t">
         <form id="chat-form" class="flex gap-2">
             @csrf
+            {{-- Pass the buyer_id so the controller knows which channel to trigger --}}
+            <input type="hidden" id="buyer_id" value="{{ $buyerId }}">
+            
             <input type="text" id="message-input" placeholder="Type your message..." 
-                class="flex-1 border border-gray-300 rounded-full px-4 py-2 focus:ring-2 focus:ring-blue-500 outline-none">
+                class="flex-1 border border-gray-300 rounded-full px-4 py-2 outline-none">
             <button type="submit" class="bg-blue-600 text-white px-6 py-2 rounded-full font-bold">Send</button>
         </form>
     </div>
 
     <script>
-        // 1. Setup Pusher
-        const pusher = new Pusher('{{ env("PUSHER_APP_KEY") }}', {
-            cluster: '{{ env("PUSHER_APP_CLUSTER") }}'
-        });
+        const pusher = new Pusher('{{ env("PUSHER_APP_KEY") }}', { cluster: '{{ env("PUSHER_APP_CLUSTER") }}' });
 
-        // 2. Subscribe to this specific product's channel
-        const channel = pusher.subscribe('chat.{{ $product->id }}');
+        // UNIQUE CHANNEL SUBSCRIPTION
+        const channel = pusher.subscribe('chat.{{ $product->id }}.{{ $buyerId }}');
 
-        // 3. Listen for the 'message.sent' event
         channel.bind('message.sent', function(data) {
-            // Only append if the message is from the OTHER person
             if (data.sender_id != "{{ auth()->id() }}") {
                 appendMessage(data.content, 'other');
             }
         });
 
-        // 4. Handle Form Submission with AJAX (So page doesn't refresh)
         $('#chat-form').on('submit', function(e) {
             e.preventDefault();
             const content = $('#message-input').val();
+            const buyer_id = $('#buyer_id').val();
             if (content.trim() === '') return;
 
-            // Immediately show my message on my screen
             appendMessage(content, 'me');
             $('#message-input').val('');
 
             $.post("{{ route('chat.send', $product->id) }}", {
                 _token: "{{ csrf_token() }}",
-                content: content
+                content: content,
+                buyer_id: buyer_id
             });
         });
 
         function appendMessage(content, type) {
-            // type will be 'me' or 'other'
             const isMe = type === 'me';
             const alignment = isMe ? 'justify-end' : 'justify-start';
             const colors = isMe ? 'bg-blue-500 text-white rounded-tr-none' : 'bg-white text-gray-800 rounded-tl-none border';
-            
-            const html = `
-                <div class="flex ${alignment}">
-                    <div class="max-w-[80%] px-4 py-2 rounded-2xl shadow ${colors}">
-                        <p>${content}</p>
-                        <span class="text-[10px] block mt-1 opacity-70">Just now</span>
-                    </div>
-                </div>`;
-            
+            const html = `<div class="flex ${alignment}"><div class="max-w-[80%] px-4 py-2 rounded-2xl shadow ${colors}"><p>${content}</p></div></div>`;
             $('#chat-box').append(html);
             $('#chat-box').scrollTop($('#chat-box')[0].scrollHeight);
         }
-
-        // Auto-scroll to bottom on load
         $('#chat-box').scrollTop($('#chat-box')[0].scrollHeight);
     </script>
 </body>

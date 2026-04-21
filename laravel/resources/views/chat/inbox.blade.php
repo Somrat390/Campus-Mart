@@ -1,4 +1,4 @@
-@extends('layouts.app') {{-- Assuming you have a layout --}}
+@extends('layouts.app')
 
 @section('content')
 <div class="max-w-2xl mx-auto p-4">
@@ -7,11 +7,12 @@
     <div class="bg-white rounded-xl shadow divide-y">
         @forelse($conversations as $chat)
             @php
-                // Find out who the "other" person is
                 $otherUser = ($chat->sender_id == auth()->id()) ? $chat->receiver : $chat->sender;
+                // Important: If you are the owner, the other person is the buyer
+                $buyerId = (auth()->id() == $chat->product->user_id) ? $otherUser->id : auth()->id();
             @endphp
             
-            <a href="{{ route('chat.show', $chat->product_id) }}" class="flex items-center p-4 hover:bg-gray-50 transition">
+            <a href="{{ route('chat.show', $chat->product->id) }}?buyer_id={{ $buyerId }}" class="flex items-center p-4 hover:bg-gray-50 transition">
                 <div class="h-12 w-12 bg-blue-100 rounded-full flex items-center justify-center text-blue-600 font-bold mr-4 text-xl">
                     {{ substr($otherUser->name, 0, 1) }}
                 </div>
@@ -27,7 +28,6 @@
         @empty
             <div class="p-8 text-center text-gray-500">
                 <p>No conversations yet.</p>
-                <a href="{{ route('dashboard') }}" class="text-blue-500 underline">Browse items</a>
             </div>
         @endforelse
     </div>

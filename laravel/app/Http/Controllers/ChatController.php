@@ -10,44 +10,61 @@ use Pusher\Pusher;
 
 class ChatController extends Controller
 {
-    public function show(Product $product)
+    public function show(Product $product, Request $request)
     {
-        // If I am the owner, I should probably be coming from the Inbox, 
-        // but let's allow viewing the chat.
-        $messages = Message::where('product_id', $product->id)
-            ->where(function($q) use ($product) {
-                $q->where('sender_id', Auth::id())
-                  ->orWhere('receiver_id', Auth::id());
-            })->orderBy('created_at', 'asc')->get();
+        $userId = Auth::id();
+        
+        // If the seller is visiting, we need to know WHICH buyer they are talking to
+        $buyerId = $request->query('buyer_id');
 
-        // Optional: Mark messages as read when opening the chat
+        $query = Message::where('product_id', $product->id);
+
+        if ($userId == $product->user_id) {
+            // I am the Seller: Show only messages with this specific buyer
+            if (!$buyerId) return redirect()->route('chat.inbox');
+            
+            $query->where(function($q) use ($userId, $buyerId) {
+                $q->where(function($sq) use ($userId, $buyerId) {
+                    $sq->where('sender_id', $userId)->where('receiver_id', $buyerId);
+                })->orWhere(function($sq) use ($userId, $buyerId) {
+                    $sq->where('sender_id', $buyerId)->where('receiver_id', $userId);
+                });
+            });
+        } else {
+            // I am a Buyer: Show only MY messages with the seller for this product
+            $buyerId = $userId;
+            $query->where(function($q) use ($userId) {
+                $q->where('sender_id', $userId)->orWhere('receiver_id', $userId);
+            });
+        }
+
+        $messages = $query->orderBy('created_at', 'asc')->get();
+
+        // Mark as read
         Message::where('product_id', $product->id)
-            ->where('receiver_id', Auth::id())
+            ->where('receiver_id', $userId)
             ->update(['is_read' => true]);
 
-        return view('chat.show', compact('product', 'messages'));
+        return view('chat.show', compact('product', 'messages', 'buyerId'));
     }
 
     public function send(Request $request, Product $product)
     {
         $request->validate(['content' => 'required|string']);
+        $userId = Auth::id();
 
-        // LOGIC FIX: Determine who the receiver is
-        // If I am the owner of the product, the receiver is the other person in the chat
-        // (We get the receiver from the last message sent in this thread)
-        $receiverId = $product->user_id;
-        if (Auth::id() == $product->user_id) {
-            $lastMessage = Message::where('product_id', $product->id)
-                ->where('receiver_id', Auth::id())
-                ->first();
-            $receiverId = $lastMessage ? $lastMessage->sender_id : null;
+        // If I am the owner, I'm replying to a buyer. Otherwise, I'm sending to the owner.
+        if ($userId == $product->user_id) {
+            $receiverId = $request->buyer_id; // Passed from the hidden input in show.blade
+            $buyerId = $receiverId; 
+        } else {
+            $receiverId = $product->user_id;
+            $buyerId = $userId;
         }
-
-        if (!$receiverId) return response()->json(['error' => 'Receiver not found'], 400);
 
         $message = Message::create([
             'product_id' => $product->id,
-            'sender_id' => Auth::id(),
+            'sender_id' => $userId,
             'receiver_id' => $receiverId,
             'content' => $request->content,
         ]);
@@ -59,15 +76,12 @@ class ChatController extends Controller
             ['cluster' => env('PUSHER_APP_CLUSTER'), 'useTLS' => true]
         );
 
-        // Update the specific chat window
-        $pusher->trigger('chat.' . $product->id, 'message.sent', [
-            'content' => $message->content,
-            'sender_id' => Auth::id(),
-        ]);
+        // CHANNEL FORMAT: chat.PRODUCT_ID.BUYER_ID
+        $channelName = 'chat.' . $product->id . '.' . $buyerId;
 
-        // Trigger the red notification dot for the receiver
-        $pusher->trigger('user.' . $receiverId, 'message.new', [
-            'product_id' => $product->id
+        $pusher->trigger($channelName, 'message.sent', [
+            'content' => $message->content,
+            'sender_id' => $userId,
         ]);
 
         return response()->json(['status' => 'success']);
@@ -77,16 +91,17 @@ class ChatController extends Controller
     {
         $userId = auth()->id();
 
-        // When the user opens the Inbox, we can mark all their received messages as read
-        // or you can do this specifically when they click a chat.
-        Message::where('receiver_id', $userId)->update(['is_read' => true]);
-
+        // Get unique conversations based on Product + the other person
+        // This ensures a seller sees multiple rows if 5 buyers message about 1 laptop
         $conversations = Message::where('sender_id', $userId)
             ->orWhere('receiver_id', $userId)
             ->with(['product', 'sender', 'receiver'])
             ->latest()
             ->get()
-            ->unique('product_id');
+            ->unique(function ($item) use ($userId) {
+                $otherPersonId = ($item->sender_id == $userId) ? $item->receiver_id : $item->sender_id;
+                return $item->product_id . '-' . $otherPersonId;
+            });
 
         return view('chat.inbox', compact('conversations'));
     }
